@@ -40,7 +40,7 @@ interface Series {
   seasons: number;
   totalEpisodes: number;
   casts: Cast[];
-  episodes: Episode[];
+  episodes?: Episode[];
 }
 
 interface SimilarSeries {
@@ -58,11 +58,120 @@ const tabs = [
   { id: 'explore', label: 'Explore' },
 ];
 
+// Static series data
+const staticSeries: Series[] = [
+  {
+    id: '1',
+    title: 'Breaking Bad',
+    year: 2008,
+    rating: 9.5,
+    poster: '/images/breaking-bad.jpg',
+    backdrop: '/images/breaking-bad.jpg',
+    description: 'A high school chemistry teacher turned methamphetamine manufacturer partners with a former student.',
+    genres: 'Crime,Drama,Thriller',
+    quality4k: true,
+    seasons: 5,
+    totalEpisodes: 62,
+    casts: [
+      { id: '1', name: 'Bryan Cranston', role: 'Walter White', photo: null },
+      { id: '2', name: 'Aaron Paul', role: 'Jesse Pinkman', photo: null },
+      { id: '3', name: 'Anna Gunn', role: 'Skyler White', photo: null },
+      { id: '4', name: 'Dean Norris', role: 'Hank Schrader', photo: null },
+    ],
+    episodes: [
+      { id: 'e1', season: 1, episode: 1, title: 'Pilot', duration: 58, fileSize: '1.8 GB', quality: '1080p HEVC', format: 'MKV' },
+      { id: 'e2', season: 1, episode: 2, title: 'Cat\'s in the Bag...', duration: 48, fileSize: '1.5 GB', quality: '1080p HEVC', format: 'MKV' },
+      { id: 'e3', season: 1, episode: 3, title: '...And the Bag\'s in the River', duration: 48, fileSize: '1.5 GB', quality: '1080p HEVC', format: 'MKV' },
+    ],
+  },
+  {
+    id: '2',
+    title: 'Game of Thrones',
+    year: 2011,
+    rating: 9.2,
+    poster: '/images/got.jpg',
+    backdrop: '/images/got.jpg',
+    description: 'Nine noble families fight for control of the mythical lands of Westeros.',
+    genres: 'Action,Adventure,Drama',
+    quality4k: true,
+    seasons: 8,
+    totalEpisodes: 73,
+    casts: [
+      { id: '5', name: 'Emilia Clarke', role: 'Daenerys Targaryen', photo: null },
+      { id: '6', name: 'Kit Harington', role: 'Jon Snow', photo: null },
+      { id: '7', name: 'Peter Dinklage', role: 'Tyrion Lannister', photo: null },
+      { id: '8', name: 'Lena Headey', role: 'Cersei Lannister', photo: null },
+    ],
+    episodes: [
+      { id: 'e4', season: 1, episode: 1, title: 'Winter Is Coming', duration: 62, fileSize: '2.1 GB', quality: '1080p HEVC', format: 'MKV' },
+      { id: 'e5', season: 1, episode: 2, title: 'The Kingsroad', duration: 56, fileSize: '1.9 GB', quality: '1080p HEVC', format: 'MKV' },
+    ],
+  },
+  {
+    id: '3',
+    title: 'Stranger Things',
+    year: 2016,
+    rating: 8.7,
+    poster: '/images/stranger-things.jpg',
+    backdrop: '/images/stranger-things.jpg',
+    description: 'When a young boy vanishes, a small town uncovers a mystery involving secret experiments and supernatural forces.',
+    genres: 'Drama,Fantasy,Horror',
+    quality4k: true,
+    seasons: 4,
+    totalEpisodes: 34,
+    casts: [
+      { id: '9', name: 'Millie Bobby Brown', role: 'Eleven', photo: null },
+      { id: '10', name: 'Finn Wolfhard', role: 'Mike Wheeler', photo: null },
+      { id: '11', name: 'Winona Ryder', role: 'Joyce Byers', photo: null },
+      { id: '12', name: 'David Harbour', role: 'Jim Hopper', photo: null },
+    ],
+    episodes: [
+      { id: 'e6', season: 1, episode: 1, title: 'Chapter One: The Vanishing of Will Byers', duration: 47, fileSize: '1.5 GB', quality: '1080p HEVC', format: 'MKV' },
+    ],
+  },
+  {
+    id: '4',
+    title: 'The Witcher',
+    year: 2019,
+    rating: 8.2,
+    poster: '/images/witcher.jpg',
+    backdrop: '/images/witcher.jpg',
+    description: 'Geralt of Rivia, a solitary monster hunter, struggles to find his place in a world where people often prove more wicked than beasts.',
+    genres: 'Action,Adventure,Fantasy',
+    quality4k: true,
+    seasons: 3,
+    totalEpisodes: 24,
+    casts: [
+      { id: '13', name: 'Henry Cavill', role: 'Geralt of Rivia', photo: null },
+      { id: '14', name: 'Anya Chalotra', role: 'Yennefer', photo: null },
+      { id: '15', name: 'Freya Allan', role: 'Ciri', photo: null },
+    ],
+    episodes: [],
+  },
+  {
+    id: '5',
+    title: 'Money Heist',
+    year: 2017,
+    rating: 8.2,
+    poster: '/images/money-heist.jpg',
+    backdrop: '/images/money-heist.jpg',
+    description: 'An unusual group of robbers attempt to carry out the most perfect robbery in Spanish history.',
+    genres: 'Action,Crime,Drama',
+    quality4k: true,
+    seasons: 5,
+    totalEpisodes: 48,
+    casts: [
+      { id: '17', name: 'Úrsula Corberó', role: 'Tokyo', photo: null },
+      { id: '18', name: 'Álvaro Morte', role: 'The Professor', photo: null },
+    ],
+    episodes: [],
+  },
+];
+
 export default function SeriesDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [series, setSeries] = useState<Series | null>(null);
-  const [episodesBySeason, setEpisodesBySeason] = useState<Record<number, Episode[]>>({});
   const [similarSeries, setSimilarSeries] = useState<SimilarSeries[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMore, setViewMore] = useState(false);
@@ -73,34 +182,89 @@ export default function SeriesDetailPage() {
   const { bookmarks, addBookmark, removeBookmark, isBookmarked, addRecent } = useAppStore();
 
   useEffect(() => {
-    const id = params.id;
-    fetch(`/api/series/${id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setSeries(data.series);
-        setEpisodesBySeason(data.episodesBySeason || {});
-        setSimilarSeries(data.similarSeries || []);
-        setLoading(false);
-
-        // Add to recent views
-        if (data.series) {
-          addRecent({
-            id: `series-${data.series.id}`,
-            type: 'series',
-            seriesId: data.series.id,
-            series: {
-              id: data.series.id,
-              title: data.series.title,
-              year: data.series.year,
-              rating: data.series.rating,
-              poster: data.series.poster,
-              quality4k: data.series.quality4k,
-            },
-            viewedAt: new Date().toISOString(),
-          });
-        }
-      })
-      .catch(console.error);
+    const id = params.id as string;
+    let foundSeries: Series | null = null;
+    let similar: SimilarSeries[] = [];
+    
+    // First check localStorage for TMDB imported series
+    const tmdbSeries = JSON.parse(localStorage.getItem('tmdb-series') || '[]');
+    const tmdbShow = tmdbSeries.find((s: Series) => s.id === id);
+    
+    if (tmdbShow) {
+      foundSeries = {
+        id: tmdbShow.id,
+        title: tmdbShow.title,
+        year: tmdbShow.year,
+        rating: tmdbShow.rating,
+        poster: tmdbShow.poster,
+        backdrop: tmdbShow.backdrop,
+        description: tmdbShow.description || tmdbShow.overview || '',
+        genres: tmdbShow.genres || '',
+        quality4k: tmdbShow.quality4k ?? true,
+        seasons: tmdbShow.seasons || 1,
+        totalEpisodes: tmdbShow.totalEpisodes || 0,
+        casts: tmdbShow.casts || [],
+        episodes: tmdbShow.episodes || [],
+      };
+      
+      // Get similar series
+      const genres = foundSeries.genres.split(',');
+      similar = tmdbSeries
+        .filter((s: Series) => s.id !== id && genres.some((g) => s.genres?.includes(g.trim())))
+        .slice(0, 6)
+        .map((s: Series) => ({
+          id: s.id,
+          title: s.title,
+          year: s.year,
+          rating: s.rating,
+          poster: s.poster,
+          quality4k: s.quality4k ?? true,
+        }));
+    } else {
+      // Check static series
+      const staticShow = staticSeries.find((s) => s.id === id);
+      
+      if (staticShow) {
+        foundSeries = staticShow;
+        
+        const genres = staticShow.genres.split(',');
+        similar = staticSeries
+          .filter((s) => s.id !== id && genres.some((g) => s.genres.includes(g.trim())))
+          .slice(0, 6)
+          .map((s) => ({
+            id: s.id,
+            title: s.title,
+            year: s.year,
+            rating: s.rating,
+            poster: s.poster,
+            quality4k: s.quality4k,
+          }));
+      }
+    }
+    
+    // Set state at the end - using flushSync pattern for initial load
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSeries(foundSeries);
+    setSimilarSeries(similar);
+    setLoading(false);
+    
+    // Add to recent if found
+    if (foundSeries) {
+      addRecent({
+        id: `series-${foundSeries.id}`,
+        type: 'series',
+        seriesId: foundSeries.id,
+        series: {
+          id: foundSeries.id,
+          title: foundSeries.title,
+          year: foundSeries.year,
+          rating: foundSeries.rating,
+          poster: foundSeries.poster,
+          quality4k: foundSeries.quality4k,
+        },
+        viewedAt: new Date().toISOString(),
+      });
+    }
   }, [params.id, addRecent]);
 
   const bookmarked = series ? isBookmarked(series.id, 'series') : false;
@@ -143,6 +307,15 @@ export default function SeriesDetailPage() {
       [episodeId]: !prev[episodeId],
     }));
   };
+
+  // Group episodes by season
+  const episodesBySeason = series?.episodes?.reduce((acc, ep) => {
+    if (!acc[ep.season]) {
+      acc[ep.season] = [];
+    }
+    acc[ep.season].push(ep);
+    return acc;
+  }, {} as Record<number, Episode[]>) || {};
 
   if (loading) {
     return (
@@ -245,7 +418,11 @@ export default function SeriesDetailPage() {
             <h3 className="text-white font-semibold">Download Episodes</h3>
             
             {Object.keys(episodesBySeason).length === 0 ? (
-              <p className="text-gray-500 text-center py-10">No episodes available</p>
+              <div className="text-center py-10 bg-gray-800 rounded-lg">
+                <Download className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-400 text-sm mb-2">No episodes available</p>
+                <p className="text-gray-500 text-xs">Episodes will appear here when available</p>
+              </div>
             ) : (
               Object.entries(episodesBySeason)
                 .sort(([a], [b]) => Number(a) - Number(b))
@@ -300,7 +477,6 @@ export default function SeriesDetailPage() {
                             {/* Download Links */}
                             {expandedEpisodes[ep.id] && (
                               <div className="px-4 pb-4 space-y-2">
-                                {/* 1080p */}
                                 <div className="p-3 bg-gray-800 rounded-lg flex items-center justify-between">
                                   <div>
                                     <p className="text-white text-sm font-medium">1080p</p>
@@ -312,7 +488,6 @@ export default function SeriesDetailPage() {
                                   </button>
                                 </div>
                                 
-                                {/* 720p */}
                                 <div className="p-3 bg-gray-800 rounded-lg flex items-center justify-between">
                                   <div>
                                     <p className="text-white text-sm font-medium">720p</p>
