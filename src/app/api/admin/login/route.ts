@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
 
 export async function POST(request: Request) {
   try {
@@ -12,28 +11,22 @@ export async function POST(request: Request) {
       );
     }
 
-    const user = await db.user.findFirst({
-      where: {
-        username: username,
-        password: password,
-        isAdmin: true,
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
+    // Hardcoded admin credentials for Vercel deployment
+    // Username: Admin8676, Password: Admin8676
+    if (username === 'Admin8676' && password === 'Admin8676') {
+      return NextResponse.json({
+        user: {
+          id: 'admin-1',
+          username: 'Admin8676',
+          isAdmin: true,
+        },
+      });
     }
 
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        username: user.username,
-        isAdmin: user.isAdmin,
-      },
-    });
+    return NextResponse.json(
+      { error: 'Invalid credentials' },
+      { status: 401 }
+    );
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json({ error: 'Failed to login' }, { status: 500 });
