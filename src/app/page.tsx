@@ -30,15 +30,14 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Seed database first
-    fetch('/api/seed')
-      .then(() => {
-        // Fetch movies
-        return fetch('/api/movies?limit=10');
-      })
+    // Fetch movies
+    fetch('/api/movies?limit=10')
       .then((res) => res.json())
       .then((data) => {
-        setMovies(data.movies || []);
+        // Merge with TMDB imported movies from localStorage
+        const tmdbMovies = JSON.parse(localStorage.getItem('tmdb-movies') || '[]');
+        const allMovies = [...tmdbMovies, ...(data.movies || [])];
+        setMovies(allMovies.slice(0, 10));
       })
       .catch(console.error);
 
@@ -46,7 +45,10 @@ export default function HomePage() {
     fetch('/api/series?limit=10')
       .then((res) => res.json())
       .then((data) => {
-        setSeries(data.series || []);
+        // Merge with TMDB imported series from localStorage
+        const tmdbSeries = JSON.parse(localStorage.getItem('tmdb-series') || '[]');
+        const allSeries = [...tmdbSeries, ...(data.series || [])];
+        setSeries(allSeries.slice(0, 10));
         setLoading(false);
       })
       .catch(console.error);

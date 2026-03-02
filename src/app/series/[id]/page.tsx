@@ -54,7 +54,6 @@ interface SimilarSeries {
 
 const tabs = [
   { id: 'detail', label: 'Detail' },
-  { id: 'episode', label: 'Episode' },
   { id: 'download', label: 'Download' },
   { id: 'explore', label: 'Explore' },
 ];
@@ -236,66 +235,6 @@ export default function SeriesDetailPage() {
                   ))}
                 </div>
               </div>
-            )}
-          </div>
-        );
-
-      case 'episode':
-        return (
-          <div className="space-y-4">
-            <h3 className="text-white font-semibold">Episodes</h3>
-            {Object.keys(episodesBySeason).length === 0 ? (
-              <p className="text-gray-500 text-center py-10">No episodes available</p>
-            ) : (
-              Object.entries(episodesBySeason)
-                .sort(([a], [b]) => Number(a) - Number(b))
-                .map(([season, episodes]) => (
-                  <div key={season} className="border border-gray-800 rounded-lg overflow-hidden">
-                    {/* Season Header */}
-                    <button
-                      onClick={() => toggleSeason(Number(season))}
-                      className="w-full flex items-center justify-between p-4 bg-gray-800/50 hover:bg-gray-800 transition-colors"
-                    >
-                      <span className="text-white font-medium">Season {season}</span>
-                      <div className="flex items-center gap-2 text-gray-400">
-                        <span className="text-sm">{episodes.length} episodes</span>
-                        <ChevronRight
-                          className={cn(
-                            'w-5 h-5 transition-transform',
-                            expandedSeasons[Number(season)] && 'rotate-90'
-                          )}
-                        />
-                      </div>
-                    </button>
-
-                    {/* Episodes List */}
-                    {expandedSeasons[Number(season)] && (
-                      <div className="divide-y divide-gray-800">
-                        {episodes.map((ep) => (
-                          <div
-                            key={ep.id}
-                            className="p-4 flex items-center justify-between hover:bg-gray-800/30 transition-colors"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center text-sm font-medium">
-                                {ep.episode}
-                              </div>
-                              <div>
-                                <p className="text-white text-sm">{ep.title}</p>
-                                <p className="text-gray-500 text-xs">
-                                  {ep.duration} min • {ep.quality || '1080p'}
-                                </p>
-                              </div>
-                            </div>
-                            <button className="px-3 py-1.5 bg-red-500 text-white text-xs rounded font-medium">
-                              Play
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))
             )}
           </div>
         );

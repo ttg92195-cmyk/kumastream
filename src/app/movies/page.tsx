@@ -26,7 +26,19 @@ export default function MoviesPage() {
     fetch(url)
       .then((res) => res.json())
       .then((data) => {
-        setMovies(data.movies || []);
+        // Merge with TMDB imported movies from localStorage
+        const tmdbMovies = JSON.parse(localStorage.getItem('tmdb-movies') || '[]');
+        const allMovies = [...tmdbMovies, ...(data.movies || [])];
+        
+        // Filter by search query if present
+        let filtered = allMovies;
+        if (searchQuery) {
+          filtered = allMovies.filter((m: Movie) =>
+            m.title.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+        }
+        
+        setMovies(filtered);
         setLoading(false);
       })
       .catch(console.error);

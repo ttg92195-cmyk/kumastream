@@ -26,7 +26,19 @@ export default function SeriesPage() {
     fetch(url)
       .then((res) => res.json())
       .then((data) => {
-        setSeries(data.series || []);
+        // Merge with TMDB imported series from localStorage
+        const tmdbSeries = JSON.parse(localStorage.getItem('tmdb-series') || '[]');
+        const allSeries = [...tmdbSeries, ...(data.series || [])];
+        
+        // Filter by search query if present
+        let filtered = allSeries;
+        if (searchQuery) {
+          filtered = allSeries.filter((s: Series) =>
+            s.title.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+        }
+        
+        setSeries(filtered);
         setLoading(false);
       })
       .catch(console.error);
