@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/movie/Header';
 import { MovieCard } from '@/components/movie/MovieCard';
@@ -23,7 +23,7 @@ interface Series {
   quality4k: boolean;
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -131,5 +131,21 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0a0a0a] p-4">
+        <div className="grid grid-cols-3 gap-3">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="aspect-[2/3] bg-gray-800 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      </div>
+    }>
+      <SearchContent />
+    </Suspense>
   );
 }
