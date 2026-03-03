@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
@@ -20,9 +21,15 @@ import {
 import { cn } from '@/lib/utils';
 
 export function Sidebar() {
-  const { sidebarOpen, setSidebarOpen, admin, logoutAdmin } = useAppStore();
+  const { sidebarOpen, setSidebarOpen, admin, logoutAdmin, _hasHydrated } = useAppStore();
   const pathname = usePathname();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  // Only render after mounted on client (prevents hydration mismatch)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Base menu items (always visible)
   const baseMenuItems = [
@@ -47,7 +54,13 @@ export function Sidebar() {
     router.push('/');
   };
 
+  // Don't render until mounted (prevents hydration mismatch)
+  if (!mounted) return null;
+  
   if (!sidebarOpen) return null;
+
+  // Use hydrated data if available, otherwise use defaults
+  const currentAdmin = _hasHydrated ? admin : null;
 
   return (
     <>
@@ -79,10 +92,10 @@ export function Sidebar() {
         </div>
 
         {/* Admin Badge */}
-        {admin && (
+        {currentAdmin && (
           <div className="mx-4 mt-4 p-3 bg-red-500/20 rounded-lg border border-red-500/50">
             <p className="text-red-400 text-sm font-medium">Admin Mode</p>
-            <p className="text-gray-400 text-xs">Logged in as {admin.username}</p>
+            <p className="text-gray-400 text-xs">Logged in as {currentAdmin.username}</p>
           </div>
         )}
 
@@ -111,7 +124,7 @@ export function Sidebar() {
           })}
 
           {/* Admin Only Items */}
-          {admin && (
+          {currentAdmin && (
             <>
               <div className="pt-4 pb-2">
                 <p className="text-gray-500 text-xs font-medium px-4">Admin Tools</p>
@@ -142,7 +155,7 @@ export function Sidebar() {
 
           {/* Login/Logout */}
           <div className="pt-4 border-t border-gray-800 mt-4">
-            {admin ? (
+            {currentAdmin ? (
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-white/5 hover:text-white transition-colors"

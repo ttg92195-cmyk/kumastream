@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface Movie {
   id: string;
@@ -45,6 +45,10 @@ interface AdminUser {
 }
 
 interface AppState {
+  // Hydration state
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
+  
   // Sidebar state
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
@@ -72,9 +76,41 @@ interface AppState {
   setSearchQuery: (query: string) => void;
 }
 
+// Safe storage that works on both client and server
+const safeStorage = {
+  getItem: (name: string): string | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      return localStorage.getItem(name);
+    } catch {
+      return null;
+    }
+  },
+  setItem: (name: string, value: string): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(name, value);
+    } catch {
+      // Ignore errors
+    }
+  },
+  removeItem: (name: string): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.removeItem(name);
+    } catch {
+      // Ignore errors
+    }
+  },
+};
+
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
+      // Hydration state
+      _hasHydrated: false,
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
+      
       // Sidebar state
       sidebarOpen: false,
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -125,11 +161,15 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'cine-stream-storage',
+      storage: createJSONStorage(() => safeStorage),
       partialize: (state) => ({
         bookmarks: state.bookmarks,
         recents: state.recents,
         admin: state.admin,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

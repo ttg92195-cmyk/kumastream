@@ -29,7 +29,7 @@ export function Header({
   }, []);
 
   // Use hydrated data if available, otherwise use defaults
-  const currentSearchQuery = mounted && _hasHydrated ? searchQuery : '';
+  const currentSearchQuery = (mounted && _hasHydrated) ? searchQuery : '';
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +48,9 @@ export function Header({
       onSearch('');
     }
   };
+
+  // Don't render search value until hydrated
+  const displaySearchQuery = mounted && _hasHydrated ? searchQuery : '';
 
   return (
     <header className="sticky top-0 z-20 bg-[#0a0a0a] border-b border-[#262626]">
@@ -74,14 +77,14 @@ export function Header({
               </div>
               <input
                 type="text"
-                value={currentSearchQuery}
+                value={displaySearchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setIsSearchFocused(false)}
                 placeholder={searchPlaceholder}
                 className="w-full bg-[#1f1f1f] text-white placeholder-gray-500 pl-10 pr-10 py-2 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
               />
-              {currentSearchQuery && (
+              {displaySearchQuery && (
                 <button
                   type="button"
                   onClick={clearSearch}
