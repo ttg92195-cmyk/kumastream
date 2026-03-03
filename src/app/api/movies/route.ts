@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
 
-// Static movies data (no database needed)
-const movies = [
+// Static movies data (fallback when database is not available)
+const staticMovies = [
   {
-    id: '1',
+    id: 'static-1',
     title: 'Boyz n the Hood',
     year: 1991,
     rating: 7.6,
@@ -22,14 +23,15 @@ const movies = [
     imdbRating: 7.8,
     rtRating: 96,
     casts: [
-      { id: '1', name: 'Cuba Gooding Jr.', role: 'Tre Styles' },
-      { id: '2', name: 'Laurence Fishburne', role: 'Furious Styles' },
-      { id: '3', name: 'Ice Cube', role: 'Doughboy' },
-      { id: '4', name: 'Morris Chestnut', role: 'Ricky Baker' },
+      { id: '1', name: 'Cuba Gooding Jr.', role: 'Tre Styles', photo: null },
+      { id: '2', name: 'Laurence Fishburne', role: 'Furious Styles', photo: null },
+      { id: '3', name: 'Ice Cube', role: 'Doughboy', photo: null },
+      { id: '4', name: 'Morris Chestnut', role: 'Ricky Baker', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '2',
+    id: 'static-2',
     title: 'The Dark Knight',
     year: 2008,
     rating: 9.0,
@@ -48,14 +50,15 @@ const movies = [
     imdbRating: 9.0,
     rtRating: 94,
     casts: [
-      { id: '5', name: 'Christian Bale', role: 'Bruce Wayne / Batman' },
-      { id: '6', name: 'Heath Ledger', role: 'Joker' },
-      { id: '7', name: 'Aaron Eckhart', role: 'Harvey Dent' },
-      { id: '8', name: 'Michael Caine', role: 'Alfred Pennyworth' },
+      { id: '5', name: 'Christian Bale', role: 'Bruce Wayne / Batman', photo: null },
+      { id: '6', name: 'Heath Ledger', role: 'Joker', photo: null },
+      { id: '7', name: 'Aaron Eckhart', role: 'Harvey Dent', photo: null },
+      { id: '8', name: 'Michael Caine', role: 'Alfred Pennyworth', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '3',
+    id: 'static-3',
     title: 'Inception',
     year: 2010,
     rating: 8.8,
@@ -74,14 +77,15 @@ const movies = [
     imdbRating: 8.8,
     rtRating: 87,
     casts: [
-      { id: '9', name: 'Leonardo DiCaprio', role: 'Dom Cobb' },
-      { id: '10', name: 'Joseph Gordon-Levitt', role: 'Arthur' },
-      { id: '11', name: 'Ellen Page', role: 'Ariadne' },
-      { id: '12', name: 'Tom Hardy', role: 'Eames' },
+      { id: '9', name: 'Leonardo DiCaprio', role: 'Dom Cobb', photo: null },
+      { id: '10', name: 'Joseph Gordon-Levitt', role: 'Arthur', photo: null },
+      { id: '11', name: 'Ellen Page', role: 'Ariadne', photo: null },
+      { id: '12', name: 'Tom Hardy', role: 'Eames', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '4',
+    id: 'static-4',
     title: 'Interstellar',
     year: 2014,
     rating: 8.7,
@@ -100,14 +104,15 @@ const movies = [
     imdbRating: 8.7,
     rtRating: 73,
     casts: [
-      { id: '13', name: 'Matthew McConaughey', role: 'Cooper' },
-      { id: '14', name: 'Anne Hathaway', role: 'Dr. Amelia Brand' },
-      { id: '15', name: 'Jessica Chastain', role: 'Murph' },
-      { id: '16', name: 'Michael Caine', role: 'Professor Brand' },
+      { id: '13', name: 'Matthew McConaughey', role: 'Cooper', photo: null },
+      { id: '14', name: 'Anne Hathaway', role: 'Dr. Amelia Brand', photo: null },
+      { id: '15', name: 'Jessica Chastain', role: 'Murph', photo: null },
+      { id: '16', name: 'Michael Caine', role: 'Professor Brand', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '5',
+    id: 'static-5',
     title: 'John Wick',
     year: 2014,
     rating: 7.4,
@@ -126,14 +131,15 @@ const movies = [
     imdbRating: 7.4,
     rtRating: 86,
     casts: [
-      { id: '17', name: 'Keanu Reeves', role: 'John Wick' },
-      { id: '18', name: 'Michael Nyqvist', role: 'Viggo Tarasov' },
-      { id: '19', name: 'Alfie Allen', role: 'Iosef Tarasov' },
-      { id: '20', name: 'Willem Dafoe', role: 'Marcus' },
+      { id: '17', name: 'Keanu Reeves', role: 'John Wick', photo: null },
+      { id: '18', name: 'Michael Nyqvist', role: 'Viggo Tarasov', photo: null },
+      { id: '19', name: 'Alfie Allen', role: 'Iosef Tarasov', photo: null },
+      { id: '20', name: 'Willem Dafoe', role: 'Marcus', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '6',
+    id: 'static-6',
     title: 'Avengers: Endgame',
     year: 2019,
     rating: 8.4,
@@ -152,14 +158,15 @@ const movies = [
     imdbRating: 8.4,
     rtRating: 94,
     casts: [
-      { id: '21', name: 'Robert Downey Jr.', role: 'Tony Stark / Iron Man' },
-      { id: '22', name: 'Chris Evans', role: 'Steve Rogers / Captain America' },
-      { id: '23', name: 'Scarlett Johansson', role: 'Natasha Romanoff' },
-      { id: '24', name: 'Chris Hemsworth', role: 'Thor' },
+      { id: '21', name: 'Robert Downey Jr.', role: 'Tony Stark / Iron Man', photo: null },
+      { id: '22', name: 'Chris Evans', role: 'Steve Rogers / Captain America', photo: null },
+      { id: '23', name: 'Scarlett Johansson', role: 'Natasha Romanoff', photo: null },
+      { id: '24', name: 'Chris Hemsworth', role: 'Thor', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '7',
+    id: 'static-7',
     title: 'Parasite',
     year: 2019,
     rating: 8.5,
@@ -178,14 +185,15 @@ const movies = [
     imdbRating: 8.5,
     rtRating: 99,
     casts: [
-      { id: '25', name: 'Song Kang-ho', role: 'Kim Ki-taek' },
-      { id: '26', name: 'Lee Sun-kyun', role: 'Park Dong-ik' },
-      { id: '27', name: 'Cho Yeo-jeong', role: 'Yeon-gyo' },
-      { id: '28', name: 'Choi Woo-shik', role: 'Kim Ki-woo' },
+      { id: '25', name: 'Song Kang-ho', role: 'Kim Ki-taek', photo: null },
+      { id: '26', name: 'Lee Sun-kyun', role: 'Park Dong-ik', photo: null },
+      { id: '27', name: 'Cho Yeo-jeong', role: 'Yeon-gyo', photo: null },
+      { id: '28', name: 'Choi Woo-shik', role: 'Kim Ki-woo', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '8',
+    id: 'static-8',
     title: 'The Shawshank Redemption',
     year: 1994,
     rating: 9.3,
@@ -204,14 +212,15 @@ const movies = [
     imdbRating: 9.3,
     rtRating: 91,
     casts: [
-      { id: '29', name: 'Tim Robbins', role: 'Andy Dufresne' },
-      { id: '30', name: 'Morgan Freeman', role: 'Ellis Boyd Red Redding' },
-      { id: '31', name: 'Bob Gunton', role: 'Warden Norton' },
-      { id: '32', name: 'William Sadler', role: 'Heywood' },
+      { id: '29', name: 'Tim Robbins', role: 'Andy Dufresne', photo: null },
+      { id: '30', name: 'Morgan Freeman', role: 'Ellis Boyd Red Redding', photo: null },
+      { id: '31', name: 'Bob Gunton', role: 'Warden Norton', photo: null },
+      { id: '32', name: 'William Sadler', role: 'Heywood', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '9',
+    id: 'static-9',
     title: 'Spider-Man: No Way Home',
     year: 2021,
     rating: 8.2,
@@ -230,14 +239,15 @@ const movies = [
     imdbRating: 8.2,
     rtRating: 93,
     casts: [
-      { id: '33', name: 'Tom Holland', role: 'Peter Parker / Spider-Man' },
-      { id: '34', name: 'Zendaya', role: 'MJ' },
-      { id: '35', name: 'Benedict Cumberbatch', role: 'Dr. Stephen Strange' },
-      { id: '36', name: 'Jacob Batalon', role: 'Ned Leeds' },
+      { id: '33', name: 'Tom Holland', role: 'Peter Parker / Spider-Man', photo: null },
+      { id: '34', name: 'Zendaya', role: 'MJ', photo: null },
+      { id: '35', name: 'Benedict Cumberbatch', role: 'Dr. Stephen Strange', photo: null },
+      { id: '36', name: 'Jacob Batalon', role: 'Ned Leeds', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '10',
+    id: 'static-10',
     title: 'Dune',
     year: 2021,
     rating: 8.0,
@@ -256,11 +266,12 @@ const movies = [
     imdbRating: 8.0,
     rtRating: 83,
     casts: [
-      { id: '37', name: 'Timothée Chalamet', role: 'Paul Atreides' },
-      { id: '38', name: 'Rebecca Ferguson', role: 'Lady Jessica' },
-      { id: '39', name: 'Oscar Isaac', role: 'Duke Leto Atreides' },
-      { id: '40', name: 'Zendaya', role: 'Chani' },
+      { id: '37', name: 'Timothée Chalamet', role: 'Paul Atreides', photo: null },
+      { id: '38', name: 'Rebecca Ferguson', role: 'Lady Jessica', photo: null },
+      { id: '39', name: 'Oscar Isaac', role: 'Duke Leto Atreides', photo: null },
+      { id: '40', name: 'Zendaya', role: 'Chani', photo: null },
     ],
+    downloadLinks: [],
   },
 ];
 
@@ -269,27 +280,66 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const genre = searchParams.get('genre');
     const search = searchParams.get('search');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    let filteredMovies = [...movies];
+    let dbMovies: any[] = [];
 
-    if (genre) {
-      filteredMovies = filteredMovies.filter((m) => m.genres.includes(genre));
+    // Try to fetch from database
+    try {
+      const whereClause: any = {};
+      
+      if (genre) {
+        whereClause.genres = { contains: genre };
+      }
+      
+      if (search) {
+        whereClause.title = { contains: search, mode: 'insensitive' };
+      }
+
+      const dbResult = await db.movie.findMany({
+        where: whereClause,
+        include: {
+          casts: true,
+          downloadLinks: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      dbMovies = dbResult.map((m) => ({
+        ...m,
+        poster: m.poster || undefined,
+        backdrop: m.backdrop || undefined,
+        downloadLinks: m.downloadLinks.map((d) => ({
+          quality: d.quality,
+          url: d.url,
+          size: d.size,
+        })),
+      }));
+    } catch (dbError) {
+      console.log('Database not available, using static data');
     }
 
+    // Combine with static data
+    let allMovies = [...dbMovies, ...staticMovies];
+
+    // Apply filters if needed
+    if (genre) {
+      allMovies = allMovies.filter((m) => m.genres.includes(genre));
+    }
     if (search) {
-      filteredMovies = filteredMovies.filter((m) =>
+      allMovies = allMovies.filter((m) =>
         m.title.toLowerCase().includes(search.toLowerCase())
       );
     }
 
-    const paginatedMovies = filteredMovies.slice(offset, offset + limit);
+    const total = allMovies.length;
+    const paginatedMovies = allMovies.slice(offset, offset + limit);
 
     return NextResponse.json({
       movies: paginatedMovies,
-      total: filteredMovies.length,
-      hasMore: offset + limit < filteredMovies.length,
+      total,
+      hasMore: offset + limit < total,
     });
   } catch (error) {
     console.error('Error fetching movies:', error);
