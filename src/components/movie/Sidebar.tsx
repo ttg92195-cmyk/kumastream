@@ -45,6 +45,7 @@ export function Sidebar() {
 
   // Admin only items
   const adminMenuItems = [
+    { name: 'Admin Dashboard', href: '/admin/dashboard', icon: Shield },
     { name: 'TMDB Generator', href: '/admin/tmdb', icon: Database },
   ];
 

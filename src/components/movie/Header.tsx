@@ -18,39 +18,37 @@ export function Header({
   searchPlaceholder = 'Search...',
   onSearch,
 }: HeaderProps) {
-  const { toggleSidebar, searchQuery, setSearchQuery, _hasHydrated } = useAppStore();
+  const { toggleSidebar, _hasHydrated } = useAppStore();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
   const router = useRouter();
 
-  // Only render after mount to prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Use hydrated data if available, otherwise use defaults
-  const currentSearchQuery = (mounted && _hasHydrated) ? searchQuery : '';
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (currentSearchQuery.trim()) {
+    if (localSearchQuery.trim()) {
       if (onSearch) {
-        onSearch(currentSearchQuery);
+        onSearch(localSearchQuery);
       } else {
-        router.push(`/search?q=${encodeURIComponent(currentSearchQuery)}`);
+        router.push(`/search?q=${encodeURIComponent(localSearchQuery)}`);
       }
     }
   };
 
   const clearSearch = () => {
-    setSearchQuery('');
+    setLocalSearchQuery('');
     if (onSearch) {
       onSearch('');
     }
   };
 
-  // Don't render search value until hydrated
-  const displaySearchQuery = mounted && _hasHydrated ? searchQuery : '';
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalSearchQuery(e.target.value);
+  };
 
   return (
     <header className="sticky top-0 z-20 bg-[#0a0a0a] border-b border-[#262626]">
@@ -77,14 +75,14 @@ export function Header({
               </div>
               <input
                 type="text"
-                value={displaySearchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={localSearchQuery}
+                onChange={handleInputChange}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setIsSearchFocused(false)}
                 placeholder={searchPlaceholder}
                 className="w-full bg-[#1f1f1f] text-white placeholder-gray-500 pl-10 pr-10 py-2 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
               />
-              {displaySearchQuery && (
+              {localSearchQuery && (
                 <button
                   type="button"
                   onClick={clearSearch}

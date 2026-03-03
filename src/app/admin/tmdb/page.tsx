@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ArrowLeft, Search, Check, Loader2, Download, Film, Tv, X } from 'lucide-react';
+import { ArrowLeft, Search, Check, Loader2, Download, Film, Tv, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -30,6 +30,8 @@ interface Genre {
   name: string;
 }
 
+const ITEMS_PER_PAGE = 20;
+
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 50 }, (_, i) => currentYear - i);
 
@@ -49,10 +51,13 @@ export default function TMDBGeneratorPage() {
   const [results, setResults] = useState<TMDBItem[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   
+  // Pagination for results
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  
   // Loading states
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
 
   // Check admin authentication
   useEffect(() => {
@@ -74,6 +79,7 @@ export default function TMDBGeneratorPage() {
   const handleSearch = useCallback(async () => {
     setLoading(true);
     setSelectedIds(new Set());
+    setCurrentPage(1);
     
     try {
       const params = new URLSearchParams();
@@ -81,11 +87,17 @@ export default function TMDBGeneratorPage() {
       if (year) params.set('year', year);
       if (genre) params.set('genre', genre);
       if (searchQuery) params.set('query', searchQuery);
-      params.set('count', count === 'all' ? '100' : count);
+      
+      // Use count from input, default to 20, no maximum limit
+      const countValue = parseInt(count) || 20;
+      params.set('count', countValue.toString());
 
       const response = await fetch(`/api/tmdb/search?${params.toString()}`);
       const data = await response.json();
-      setResults(data.results || []);
+      const allResults = data.results || [];
+      
+      setResults(allResults);
+      setTotalPages(Math.ceil(allResults.length / ITEMS_PER_PAGE));
     } catch (error) {
       console.error('Search error:', error);
     } finally {
@@ -104,32 +116,70 @@ export default function TMDBGeneratorPage() {
   };
 
   const selectAll = () => {
-    if (selectedIds.size === results.length) {
-      setSelectedIds(new Set());
+    const currentPageResults = getPaginatedResults();
+    if (selectedIds.size === currentPageResults.length) {
+      // Deselect all on current page
+      const newSelected = new Set(selectedIds);
+      currentPageResults.forEach((r) => newSelected.delete(r.id));
+      setSelectedIds(newSelected);
     } else {
-      setSelectedIds(new Set(results.map((r) => r.id)));
+      // Select all on current page
+      const newSelected = new Set(selectedIds);
+      currentPageResults.forEach((r) => newSelected.add(r.id));
+      setSelectedIds(newSelected);
     }
+  };
+
+  const getPaginatedResults = () => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    return results.slice(start, end);
+  };
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        pages.push(1, 2, 3, '...', totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1, '...', totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, '...', currentPage, '...', totalPages);
+      }
+    }
+    
+    return pages;
   };
 
   const handleImport = async () => {
     if (selectedIds.size === 0) return;
     
     setImporting(true);
-    setImportProgress({ current: 0, total: selectedIds.size });
 
-    const selectedItems = results.filter((r) => selectedIds.has(r.id));
+    const allSelectedItems = results.filter((r) => selectedIds.has(r.id));
     
     try {
       const response = await fetch('/api/tmdb/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: selectedItems.map(item => ({ id: item.id, type: item.type })) }),
+        body: JSON.stringify({ items: allSelectedItems.map(item => ({ id: item.id, type: item.type })) }),
       });
       
       const data = await response.json();
       
       if (data.success) {
-        // Data is now saved on the server, no need for localStorage
         const message = data.errors && data.errors.length > 0
           ? `Successfully imported ${data.count} items! (${data.errors.length} failed)`
           : `Successfully imported ${data.count} items!`;
@@ -139,6 +189,7 @@ export default function TMDBGeneratorPage() {
         // Remove imported items from results
         setResults(results.filter((r) => !selectedIds.has(r.id)));
         setSelectedIds(new Set());
+        setTotalPages(Math.ceil((results.length - allSelectedItems.length) / ITEMS_PER_PAGE));
       } else {
         alert('Import failed: ' + (data.error || 'Unknown error'));
       }
@@ -157,6 +208,8 @@ export default function TMDBGeneratorPage() {
       </div>
     );
   }
+
+  const currentPageResults = getPaginatedResults();
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
@@ -260,20 +313,18 @@ export default function TMDBGeneratorPage() {
               </select>
             </div>
 
-            {/* Count */}
+            {/* Count - Free text input */}
             <div>
               <label className="text-gray-400 text-sm mb-2 block">Count (Post Limit)</label>
-              <select
+              <input
+                type="number"
+                min="1"
                 value={count}
                 onChange={(e) => setCount(e.target.value)}
+                placeholder="Enter number (e.g., 20, 50, 100...)"
                 className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-              >
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="all">No Limit (All)</option>
-              </select>
+              />
+              <p className="text-gray-500 text-xs mt-1">Enter any number. Leave empty or 0 for no limit.</p>
             </div>
           </div>
 
@@ -305,7 +356,7 @@ export default function TMDBGeneratorPage() {
         {/* Results */}
         {results.length > 0 && (
           <div className="space-y-4">
-            {/* Select All */}
+            {/* Select All & Info */}
             <div className="flex items-center justify-between">
               <button
                 onClick={selectAll}
@@ -313,20 +364,24 @@ export default function TMDBGeneratorPage() {
               >
                 <div className={cn(
                   'w-5 h-5 rounded border-2 flex items-center justify-center transition-colors',
-                  selectedIds.size === results.length ? 'bg-red-500 border-red-500' : 'border-gray-500'
+                  selectedIds.size === currentPageResults.length && currentPageResults.length > 0
+                    ? 'bg-red-500 border-red-500'
+                    : 'border-gray-500'
                 )}>
-                  {selectedIds.size === results.length && <Check className="w-3 h-3 text-white" />}
+                  {selectedIds.size === currentPageResults.length && currentPageResults.length > 0 && (
+                    <Check className="w-3 h-3 text-white" />
+                  )}
                 </div>
-                Select All ({results.length})
+                Select All (Page {currentPage})
               </button>
               <span className="text-gray-400 text-sm">
-                {selectedIds.size} selected
+                {selectedIds.size} selected • {results.length} total results
               </span>
             </div>
 
             {/* Results Grid */}
             <div className="grid grid-cols-3 gap-3">
-              {results.map((item) => (
+              {currentPageResults.map((item) => (
                 <div
                   key={item.id}
                   onClick={() => toggleSelect(item.id)}
@@ -343,6 +398,7 @@ export default function TMDBGeneratorPage() {
                         fill
                         className="object-cover"
                         sizes="33vw"
+                        unoptimized
                       />
                     ) : (
                       <div className="w-full h-full bg-gray-700 flex items-center justify-center">
@@ -374,6 +430,55 @@ export default function TMDBGeneratorPage() {
                 </div>
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={cn(
+                    'flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                    currentPage === 1
+                      ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                      : 'bg-gray-800 text-white hover:bg-gray-700'
+                  )}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {getPageNumbers().map((page, index) => (
+                  <button
+                    key={index}
+                    onClick={() => typeof page === 'number' && goToPage(page)}
+                    disabled={page === '...'}
+                    className={cn(
+                      'min-w-[40px] px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                      page === currentPage
+                        ? 'bg-red-500 text-white'
+                        : page === '...'
+                        ? 'bg-transparent text-gray-400 cursor-default'
+                        : 'bg-gray-800 text-white hover:bg-gray-700'
+                    )}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={cn(
+                    'flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                    currentPage === totalPages
+                      ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                      : 'bg-gray-800 text-white hover:bg-gray-700'
+                  )}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         )}
 
