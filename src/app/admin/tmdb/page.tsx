@@ -362,7 +362,7 @@ export default function TMDBGeneratorPage() {
                     {/* Rating */}
                     <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 bg-black/70 px-1.5 py-0.5 rounded text-xs">
                       <span className="text-yellow-500">★</span>
-                      <span className="text-white text-[10px]">{item.rating.toFixed(1)}</span>
+                      <span className="text-white text-[10px]">{item.rating != null ? Number(item.rating).toFixed(1) : '0.0'}</span>
                     </div>
                   </div>
                   

@@ -731,7 +731,7 @@ export default function MovieDetailPage() {
               </div>
               <div className="flex items-center gap-1">
                 <Star className="w-4 h-4 text-red-500 fill-red-500" />
-                <span>{movie.rating.toFixed(1)}</span>
+                <span>{movie.rating != null ? Number(movie.rating).toFixed(1) : '0.0'}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />

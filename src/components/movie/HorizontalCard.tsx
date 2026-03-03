@@ -96,7 +96,7 @@ export function HorizontalCard({
         {/* Rating */}
         <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/70 px-1 py-0.5 rounded text-xs">
           <Star className="w-3 h-3 text-red-500 fill-red-500" />
-          <span className="text-white font-medium">{rating.toFixed(1)}</span>
+          <span className="text-white font-medium">{rating != null ? Number(rating).toFixed(1) : '0.0'}</span>
         </div>
 
         {/* Title & Year */}

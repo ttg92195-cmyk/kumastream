@@ -63,7 +63,7 @@ export function MovieCard({
         {/* Rating Badge - Top Right */}
         <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 bg-black/70 px-1.5 py-0.5 rounded text-xs">
           <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-          <span className="text-white font-medium text-[10px]">{rating.toFixed(1)}</span>
+          <span className="text-white font-medium text-[10px]">{rating != null ? Number(rating).toFixed(1) : '0.0'}</span>
         </div>
       </div>
 

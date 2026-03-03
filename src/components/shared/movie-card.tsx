@@ -78,7 +78,7 @@ export function MovieCard({ movie }: MovieCardProps) {
         {/* Rating Badge */}
         <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/70 px-2 py-1 rounded-md">
           <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-          <span className="text-white text-xs font-medium">{movie.rating.toFixed(1)}</span>
+          <span className="text-white text-xs font-medium">{movie.rating != null ? Number(movie.rating).toFixed(1) : '0.0'}</span>
         </div>
         
         {/* Bookmark Button */}

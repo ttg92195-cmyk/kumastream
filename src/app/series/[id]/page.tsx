@@ -610,7 +610,7 @@ export default function SeriesDetailPage() {
               </div>
               <div className="flex items-center gap-1">
                 <Star className="w-4 h-4 text-red-500 fill-red-500" />
-                <span>{series.rating.toFixed(1)}</span>
+                <span>{series.rating != null ? Number(series.rating).toFixed(1) : '0.0'}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
