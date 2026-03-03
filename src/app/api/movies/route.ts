@@ -1,0 +1,303 @@
+import { NextResponse } from 'next/server';
+import { getTMDBMovies } from '@/lib/data-store';
+
+// Static movies data (no database needed)
+const staticMovies = [
+  {
+    id: '1',
+    title: 'Boyz n the Hood',
+    year: 1991,
+    rating: 7.6,
+    duration: 112,
+    poster: '/images/boyz-hood.jpg',
+    backdrop: '/images/boyz-hood.jpg',
+    description: 'A group of young men in South Central Los Angeles navigate life in a neighborhood plagued by violence and drugs.',
+    review: 'Boyz n the Hood သည် 1991 ခုနှစ်တွင် ထွက်ရှိခဲ့သော American crime drama ဇာတ်ကားတစ်ကားဖြစ်ပြီး John Singleton မှ ရိုက်ကူးထားပါသည်။',
+    genres: 'Crime,Drama',
+    quality4k: true,
+    director: 'John Singleton',
+    fileSize: '7.7 GB / 3.4 GB / 1.5 GB',
+    quality: 'Blu-Ray 4K HEVC / 1080p HEVC / 720p',
+    format: 'MKV / MP4',
+    subtitle: 'Myanmar Subtitle (Hardsub)',
+    imdbRating: 7.8,
+    rtRating: 96,
+    casts: [
+      { id: '1', name: 'Cuba Gooding Jr.', role: 'Tre Styles' },
+      { id: '2', name: 'Laurence Fishburne', role: 'Furious Styles' },
+      { id: '3', name: 'Ice Cube', role: 'Doughboy' },
+      { id: '4', name: 'Morris Chestnut', role: 'Ricky Baker' },
+    ],
+  },
+  {
+    id: '2',
+    title: 'The Dark Knight',
+    year: 2008,
+    rating: 9.0,
+    duration: 152,
+    poster: '/images/dark-knight.jpg',
+    backdrop: '/images/dark-knight.jpg',
+    description: 'Batman faces the Joker, a criminal mastermind who wants to plunge Gotham City into anarchy.',
+    review: 'The Dark Knight သည် 2008 ခုနှစ်တွင် ထွက်ရှိခဲ့သော superhero ဇာတ်ကားတစ်ကားဖြစ်ပြီး Christopher Nolan မှ ရိုက်ကူးထားပါသည်။',
+    genres: 'Action,Crime,Drama',
+    quality4k: true,
+    director: 'Christopher Nolan',
+    fileSize: '15.2 GB / 8.4 GB / 4.2 GB',
+    quality: 'IMAX 4K HEVC / 1080p HEVC / 720p',
+    format: 'MKV',
+    subtitle: 'Myanmar Subtitle (Hardsub)',
+    imdbRating: 9.0,
+    rtRating: 94,
+    casts: [
+      { id: '5', name: 'Christian Bale', role: 'Bruce Wayne / Batman' },
+      { id: '6', name: 'Heath Ledger', role: 'Joker' },
+      { id: '7', name: 'Aaron Eckhart', role: 'Harvey Dent' },
+      { id: '8', name: 'Michael Caine', role: 'Alfred Pennyworth' },
+    ],
+  },
+  {
+    id: '3',
+    title: 'Inception',
+    year: 2010,
+    rating: 8.8,
+    duration: 148,
+    poster: '/images/inception.jpg',
+    backdrop: '/images/inception.jpg',
+    description: 'A thief who steals corporate secrets through dream-sharing technology is given the task of planting an idea.',
+    review: 'Inception သည် 2010 ခုနှစ်တွင် ထွက်ရှိခဲ့သော sci-fi action ဇာတ်ကားတစ်ကားဖြစ်ပြီး Christopher Nolan မှ ရိုက်ကူးထားပါသည်။',
+    genres: 'Action,Sci-Fi,Thriller',
+    quality4k: true,
+    director: 'Christopher Nolan',
+    fileSize: '12.8 GB / 6.5 GB / 3.2 GB',
+    quality: '4K UHD HEVC / 1080p HEVC / 720p',
+    format: 'MKV / MP4',
+    subtitle: 'Myanmar Subtitle (Hardsub)',
+    imdbRating: 8.8,
+    rtRating: 87,
+    casts: [
+      { id: '9', name: 'Leonardo DiCaprio', role: 'Dom Cobb' },
+      { id: '10', name: 'Joseph Gordon-Levitt', role: 'Arthur' },
+      { id: '11', name: 'Ellen Page', role: 'Ariadne' },
+      { id: '12', name: 'Tom Hardy', role: 'Eames' },
+    ],
+  },
+  {
+    id: '4',
+    title: 'Interstellar',
+    year: 2014,
+    rating: 8.7,
+    duration: 169,
+    poster: '/images/interstellar.jpg',
+    backdrop: '/images/interstellar.jpg',
+    description: 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity\'s survival.',
+    review: 'Interstellar သည် 2014 ခုနှစ်တွင် ထွက်ရှိခဲ့သော sci-fi ဇာတ်ကားတစ်ကားဖြစ်ပြီး Christopher Nolan မှ ရိုက်ကူးထားပါသည်။',
+    genres: 'Adventure,Drama,Sci-Fi',
+    quality4k: true,
+    director: 'Christopher Nolan',
+    fileSize: '18.5 GB / 9.2 GB / 4.8 GB',
+    quality: 'IMAX 4K HEVC / 1080p HEVC / 720p',
+    format: 'MKV',
+    subtitle: 'Myanmar Subtitle (Hardsub)',
+    imdbRating: 8.7,
+    rtRating: 73,
+    casts: [
+      { id: '13', name: 'Matthew McConaughey', role: 'Cooper' },
+      { id: '14', name: 'Anne Hathaway', role: 'Dr. Amelia Brand' },
+      { id: '15', name: 'Jessica Chastain', role: 'Murph' },
+      { id: '16', name: 'Michael Caine', role: 'Professor Brand' },
+    ],
+  },
+  {
+    id: '5',
+    title: 'John Wick',
+    year: 2014,
+    rating: 7.4,
+    duration: 101,
+    poster: '/images/john-wick.jpg',
+    backdrop: '/images/john-wick.jpg',
+    description: 'An ex-hit-man comes out of retirement to track down the gangsters that killed his dog.',
+    review: 'John Wick သည် 2014 ခုနှစ်တွင် ထွက်ရှိခဲ့သော action thriller ဇာတ်ကားတစ်ကားဖြစ်ပြီး Chad Stahelski မှ ရိုက်ကူးထားပါသည်။',
+    genres: 'Action,Thriller',
+    quality4k: true,
+    director: 'Chad Stahelski',
+    fileSize: '8.2 GB / 4.1 GB / 2.0 GB',
+    quality: '4K HEVC / 1080p HEVC / 720p',
+    format: 'MKV / MP4',
+    subtitle: 'Myanmar Subtitle (Hardsub)',
+    imdbRating: 7.4,
+    rtRating: 86,
+    casts: [
+      { id: '17', name: 'Keanu Reeves', role: 'John Wick' },
+      { id: '18', name: 'Michael Nyqvist', role: 'Viggo Tarasov' },
+      { id: '19', name: 'Alfie Allen', role: 'Iosef Tarasov' },
+      { id: '20', name: 'Willem Dafoe', role: 'Marcus' },
+    ],
+  },
+  {
+    id: '6',
+    title: 'Avengers: Endgame',
+    year: 2019,
+    rating: 8.4,
+    duration: 181,
+    poster: '/images/avengers-endgame.jpg',
+    backdrop: '/images/avengers-endgame.jpg',
+    description: 'The Avengers assemble once more to reverse Thanos\' actions and restore balance to the universe.',
+    review: 'Avengers: Endgame သည် 2019 ခုနှစ်တွင် ထွက်ရှိခဲ့သော superhero ဇာတ်ကားတစ်ကားဖြစ်ပြီး Russo Brothers မှ ရိုက်ကူးထားပါသည်။',
+    genres: 'Action,Adventure,Drama',
+    quality4k: true,
+    director: 'Anthony Russo, Joe Russo',
+    fileSize: '22.5 GB / 11.2 GB / 5.5 GB',
+    quality: 'IMAX 4K HEVC / 1080p HEVC / 720p',
+    format: 'MKV',
+    subtitle: 'Myanmar Subtitle (Hardsub)',
+    imdbRating: 8.4,
+    rtRating: 94,
+    casts: [
+      { id: '21', name: 'Robert Downey Jr.', role: 'Tony Stark / Iron Man' },
+      { id: '22', name: 'Chris Evans', role: 'Steve Rogers / Captain America' },
+      { id: '23', name: 'Scarlett Johansson', role: 'Natasha Romanoff' },
+      { id: '24', name: 'Chris Hemsworth', role: 'Thor' },
+    ],
+  },
+  {
+    id: '7',
+    title: 'Parasite',
+    year: 2019,
+    rating: 8.5,
+    duration: 132,
+    poster: '/images/parasite.jpg',
+    backdrop: '/images/parasite.jpg',
+    description: 'A poor family schemes to become employed by a wealthy family and infiltrate their household.',
+    review: 'Parasite သည် 2019 ခုနှစ်တွင် ထွက်ရှိခဲ့သော South Korean black comedy thriller ဇာတ်ကားတစ်ကားဖြစ်ပြီး Bong Joon-ho မှ ရိုက်ကူးထားပါသည်။',
+    genres: 'Comedy,Drama,Thriller',
+    quality4k: true,
+    director: 'Bong Joon-ho',
+    fileSize: '9.8 GB / 4.9 GB / 2.4 GB',
+    quality: '4K HEVC / 1080p HEVC / 720p',
+    format: 'MKV / MP4',
+    subtitle: 'Myanmar Subtitle (Hardsub)',
+    imdbRating: 8.5,
+    rtRating: 99,
+    casts: [
+      { id: '25', name: 'Song Kang-ho', role: 'Kim Ki-taek' },
+      { id: '26', name: 'Lee Sun-kyun', role: 'Park Dong-ik' },
+      { id: '27', name: 'Cho Yeo-jeong', role: 'Yeon-gyo' },
+      { id: '28', name: 'Choi Woo-shik', role: 'Kim Ki-woo' },
+    ],
+  },
+  {
+    id: '8',
+    title: 'The Shawshank Redemption',
+    year: 1994,
+    rating: 9.3,
+    duration: 142,
+    poster: '/images/shawshank.jpg',
+    backdrop: '/images/shawshank.jpg',
+    description: 'Two imprisoned men bond over a number of years, finding solace and eventual redemption.',
+    review: 'The Shawshank Redemption သည် 1994 ခုနှစ်တွင် ထွက်ရှိခဲ့သော drama ဇာတ်ကားတစ်ကားဖြစ်ပြီး Frank Darabont မှ ရိုက်ကူးထားပါသည်။',
+    genres: 'Drama',
+    quality4k: true,
+    director: 'Frank Darabont',
+    fileSize: '10.5 GB / 5.2 GB / 2.6 GB',
+    quality: '4K HEVC / 1080p HEVC / 720p',
+    format: 'MKV',
+    subtitle: 'Myanmar Subtitle (Hardsub)',
+    imdbRating: 9.3,
+    rtRating: 91,
+    casts: [
+      { id: '29', name: 'Tim Robbins', role: 'Andy Dufresne' },
+      { id: '30', name: 'Morgan Freeman', role: 'Ellis Boyd Red Redding' },
+      { id: '31', name: 'Bob Gunton', role: 'Warden Norton' },
+      { id: '32', name: 'William Sadler', role: 'Heywood' },
+    ],
+  },
+  {
+    id: '9',
+    title: 'Spider-Man: No Way Home',
+    year: 2021,
+    rating: 8.2,
+    duration: 148,
+    poster: '/images/spiderman.jpg',
+    backdrop: '/images/spiderman.jpg',
+    description: 'Spider-Man seeks help from Doctor Strange to make the world forget his identity, leading to multiverse chaos.',
+    review: 'Spider-Man: No Way Home သည် 2021 ခုနှစ်တွင် ထွက်ရှိခဲ့သော superhero ဇာတ်ကားတစ်ကားဖြစ်ပြီး Jon Watts မှ ရိုက်ကူးထားပါသည်။',
+    genres: 'Action,Adventure,Fantasy',
+    quality4k: true,
+    director: 'Jon Watts',
+    fileSize: '16.2 GB / 8.1 GB / 4.0 GB',
+    quality: 'IMAX 4K HEVC / 1080p HEVC / 720p',
+    format: 'MKV / MP4',
+    subtitle: 'Myanmar Subtitle (Hardsub)',
+    imdbRating: 8.2,
+    rtRating: 93,
+    casts: [
+      { id: '33', name: 'Tom Holland', role: 'Peter Parker / Spider-Man' },
+      { id: '34', name: 'Zendaya', role: 'MJ' },
+      { id: '35', name: 'Benedict Cumberbatch', role: 'Dr. Stephen Strange' },
+      { id: '36', name: 'Jacob Batalon', role: 'Ned Leeds' },
+    ],
+  },
+  {
+    id: '10',
+    title: 'Dune',
+    year: 2021,
+    rating: 8.0,
+    duration: 155,
+    poster: '/images/dune.jpg',
+    backdrop: '/images/dune.jpg',
+    description: 'Paul Atreides, a brilliant and gifted young man born into a great destiny, must travel to the most dangerous planet.',
+    review: 'Dune သည် 2021 ခုနှစ်တွင် ထွက်ရှိခဲ့သော sci-fi ဇာတ်ကားတစ်ကားဖြစ်ပြီး Denis Villeneuve မှ ရိုက်ကူးထားပါသည်။',
+    genres: 'Action,Adventure,Sci-Fi',
+    quality4k: true,
+    director: 'Denis Villeneuve',
+    fileSize: '18.8 GB / 9.4 GB / 4.7 GB',
+    quality: 'IMAX 4K HEVC / 1080p HEVC / 720p',
+    format: 'MKV',
+    subtitle: 'Myanmar Subtitle (Hardsub)',
+    imdbRating: 8.0,
+    rtRating: 83,
+    casts: [
+      { id: '37', name: 'Timothée Chalamet', role: 'Paul Atreides' },
+      { id: '38', name: 'Rebecca Ferguson', role: 'Lady Jessica' },
+      { id: '39', name: 'Oscar Isaac', role: 'Duke Leto Atreides' },
+      { id: '40', name: 'Zendaya', role: 'Chani' },
+    ],
+  },
+];
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const genre = searchParams.get('genre');
+    const search = searchParams.get('search');
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const offset = parseInt(searchParams.get('offset') || '0');
+    const tmdbOnly = searchParams.get('tmdbOnly') === 'true';
+
+    // Combine static movies with TMDB imported movies
+    const tmdbMovies = getTMDBMovies();
+    let allMovies = tmdbOnly ? [...tmdbMovies] : [...staticMovies, ...tmdbMovies];
+
+    if (genre) {
+      allMovies = allMovies.filter((m) => m.genres.includes(genre));
+    }
+
+    if (search) {
+      allMovies = allMovies.filter((m) =>
+        m.title.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    const total = allMovies.length;
+    const paginatedMovies = allMovies.slice(offset, offset + limit);
+
+    return NextResponse.json({
+      movies: paginatedMovies,
+      total,
+      hasMore: offset + limit < total,
+    });
+  } catch (error) {
+    console.error('Error fetching movies:', error);
+    return NextResponse.json({ error: 'Failed to fetch movies' }, { status: 500 });
+  }
+}

@@ -1,0 +1,141 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  username  String     @unique
+  password  String
+  isAdmin   Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  bookmarks Bookmark[]
+  recents  RecentView[]
+}
+
+model Movie {
+  id          String     @id @default(cuid())
+  title       String
+  year        Int
+  rating      Float
+  duration    Int        // in minutes
+  poster      String
+  backdrop    String?
+  description String
+  review      String?
+  genres      String     // comma-separated
+  quality4k   Boolean    @default(false)
+  director    String?
+  fileSize    String?    // e.g., "7.7 GB / 3.4 GB / 1.5 GB"
+  quality     String?    // e.g., "Blu-Ray 4K HEVC / 1080p HEVC / 720p"
+  format      String?    // e.g., "MKV / MP4"
+  subtitle    String?    // e.g., "Myanmar Subtitle (Hardsub)"
+  imdbRating  Float?
+  rtRating    Int?       // Rotten Tomatoes percentage
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  casts       Cast[]
+  bookmarks   Bookmark[]
+  recents     RecentView[]
+}
+
+model Series {
+  id            String      @id @default(cuid())
+  title         String
+  year          Int
+  rating        Float
+  poster        String
+  backdrop      String?
+  description   String
+  genres        String      // comma-separated
+  quality4k     Boolean     @default(false)
+  seasons       Int         @default(1)
+  totalEpisodes Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  episodes      Episode[]
+  casts         Cast[]
+  bookmarks     Bookmark[]
+  recents       RecentView[]
+}
+
+model Episode {
+  id        String   @id @default(cuid())
+  seriesId  String
+  series    Series   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  season    Int
+  episode   Int
+  title     String
+  duration  Int      // in minutes
+  fileSize  String?
+  quality   String?
+  format    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Cast {
+  id       String   @id @default(cuid())
+  name     String
+  photo    String?
+  role     String?
+  movieId  String?
+  seriesId String?
+  movie    Movie?   @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  series   Series?  @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+}
+
+model Genre {
+  id        String   @id @default(cuid())
+  name      String
+  type      String   // "movie" or "series"
+  createdAt DateTime @default(now())
+
+  @@unique([name, type])
+}
+
+model Collection {
+  id        String   @id @default(cuid())
+  name      String
+  type      String   // "movie" or "series"
+  createdAt DateTime @default(now())
+
+  @@unique([name, type])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String
+  type      String   // "movie" or "series"
+  createdAt DateTime @default(now())
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movieId   String?
+  seriesId  String?
+  movie     Movie?   @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  series    Series?  @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model RecentView {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movieId   String?
+  seriesId  String?
+  movie     Movie?   @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  series    Series?  @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  viewedAt  DateTime @default(now())
+}
