@@ -2,15 +2,18 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star } from 'lucide-react';
+import { Star, Film, Tv } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Placeholder image for missing posters
+const PLACEHOLDER_POSTER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9Ijc1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMjIyIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZpbGw9IiM2NjYiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
 
 interface MovieCardProps {
   id: string;
   title: string;
   year: number;
   rating: number;
-  poster: string;
+  poster?: string | null;
   quality4k?: boolean;
   type: 'movie' | 'series';
 }
@@ -25,18 +28,31 @@ export function MovieCard({
   type = 'movie',
 }: MovieCardProps) {
   const href = type === 'movie' ? `/movie/${id}` : `/series/${id}`;
+  const posterUrl = poster || PLACEHOLDER_POSTER;
+  const isValidUrl = posterUrl && (posterUrl.startsWith('http') || posterUrl.startsWith('/') || posterUrl.startsWith('data:'));
 
   return (
     <Link href={href} className="block">
       <div className="relative aspect-[2/3] rounded-md overflow-hidden bg-gray-800">
         {/* Poster Image */}
-        <Image
-          src={poster}
-          alt={title}
-          fill
-          className="object-cover"
-          sizes="(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 20vw"
-        />
+        {isValidUrl ? (
+          <Image
+            src={posterUrl}
+            alt={title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 20vw"
+            unoptimized
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-700">
+            {type === 'movie' ? (
+              <Film className="w-8 h-8 text-gray-500" />
+            ) : (
+              <Tv className="w-8 h-8 text-gray-500" />
+            )}
+          </div>
+        )}
 
         {/* 4K Badge - Top Left */}
         {quality4k && (
