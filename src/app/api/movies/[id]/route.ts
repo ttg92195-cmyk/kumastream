@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
 
-// Static movies data
-const movies = [
+// Static movies data (fallback)
+const staticMovies = [
   {
-    id: '1',
+    id: 'static-1',
     title: 'Boyz n the Hood',
     year: 1991,
     rating: 7.6,
@@ -11,7 +12,7 @@ const movies = [
     poster: '/images/boyz-hood.jpg',
     backdrop: '/images/boyz-hood.jpg',
     description: 'A group of young men in South Central Los Angeles navigate life in a neighborhood plagued by violence and drugs.',
-    review: 'Boyz n the Hood သည် 1991 ခုနှစ်တွင် ထွက်ရှိခဲ့သော American crime drama ဇာတ်ကားတစ်ကားဖြစ်ပြီး John Singleton မှ ရိုက်ကူးထားပါသည်။ ဤဇာတ်ကားတွင် Cuba Gooding Jr., Ice Cube, Laurence Fishburne နှင့် Morris Chestnut တို့ ပါဝင်သရုပ်ဆောင်ထားပါသည်။ တောင်ပိုင်း Los Angeles ရှိ Crenshaw ခရိုင်တွင် ကြီးပြင်းလာကြသော လူငယ်သုံးဦးဖြစ်သည့် Tre, Ricky နှင့် Doughboy တို့၏ ဘဝများကို ဖော်ပြထားသည်။',
+    review: 'Boyz n the Hood သည် 1991 ခုနှစ်တွင် ထွက်ရှိခဲ့သော American crime drama ဇာတ်ကားတစ်ကားဖြစ်ပြီး John Singleton မှ ရိုက်ကူးထားပါသည်။',
     genres: 'Crime,Drama',
     quality4k: true,
     director: 'John Singleton',
@@ -27,9 +28,10 @@ const movies = [
       { id: '3', name: 'Ice Cube', role: 'Doughboy', photo: null },
       { id: '4', name: 'Morris Chestnut', role: 'Ricky Baker', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '2',
+    id: 'static-2',
     title: 'The Dark Knight',
     year: 2008,
     rating: 9.0,
@@ -37,7 +39,7 @@ const movies = [
     poster: '/images/dark-knight.jpg',
     backdrop: '/images/dark-knight.jpg',
     description: 'Batman faces the Joker, a criminal mastermind who wants to plunge Gotham City into anarchy.',
-    review: 'The Dark Knight သည် 2008 ခုနှစ်တွင် ထွက်ရှိခဲ့သော superhero ဇာတ်ကားတစ်ကားဖြစ်ပြီး Christopher Nolan မှ ရိုက်ကူးထားပါသည်။ Christian Bale မှ Batman အဖြစ် သရုပ်ဆောင်ထားပြီး Heath Ledger မှ Joker အဖြစ် သရုပ်ဆောင်ထားသည်။ ဤဇာတ်ကားသည် သမိုင်းတွင် အကောင်းဆုံး superhero ဇာတ်ကားတစ်ကားအဖြစ် ယူဆကြသည်။',
+    review: 'The Dark Knight သည် 2008 ခုနှစ်တွင် ထွက်ရှိခဲ့သော superhero ဇာတ်ကားတစ်ကားဖြစ်ပြီး Christopher Nolan မှ ရိုက်ကူးထားပါသည်။',
     genres: 'Action,Crime,Drama',
     quality4k: true,
     director: 'Christopher Nolan',
@@ -53,9 +55,10 @@ const movies = [
       { id: '7', name: 'Aaron Eckhart', role: 'Harvey Dent', photo: null },
       { id: '8', name: 'Michael Caine', role: 'Alfred Pennyworth', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '3',
+    id: 'static-3',
     title: 'Inception',
     year: 2010,
     rating: 8.8,
@@ -63,7 +66,7 @@ const movies = [
     poster: '/images/inception.jpg',
     backdrop: '/images/inception.jpg',
     description: 'A thief who steals corporate secrets through dream-sharing technology is given the task of planting an idea.',
-    review: 'Inception သည် 2010 ခုနှစ်တွင် ထွက်ရှိခဲ့သော sci-fi action ဇာတ်ကားတစ်ကားဖြစ်ပြီး Christopher Nolan မှ ရိုက်ကူးထားပါသည်။ Leonardo DiCaprio မှ အဓိကဇာတ်ဆောင် Dom Cobb အဖြစ် သရုပ်ဆောင်ထားသည်။ ဤဇာတ်ကားသည် အိပ်မက်နှင့် ဆိုင်သော ဉာဏ်ပညာရပ်များကို အသေးစိတ် ဖော်ပြထားသည်။',
+    review: 'Inception သည် 2010 ခုနှစ်တွင် ထွက်ရှိခဲ့သော sci-fi action ဇာတ်ကားတစ်ကားဖြစ်ပြီး Christopher Nolan မှ ရိုက်ကူးထားပါသည်။',
     genres: 'Action,Sci-Fi,Thriller',
     quality4k: true,
     director: 'Christopher Nolan',
@@ -79,9 +82,10 @@ const movies = [
       { id: '11', name: 'Ellen Page', role: 'Ariadne', photo: null },
       { id: '12', name: 'Tom Hardy', role: 'Eames', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '4',
+    id: 'static-4',
     title: 'Interstellar',
     year: 2014,
     rating: 8.7,
@@ -89,7 +93,7 @@ const movies = [
     poster: '/images/interstellar.jpg',
     backdrop: '/images/interstellar.jpg',
     description: 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity\'s survival.',
-    review: 'Interstellar သည် 2014 ခုနှစ်တွင် ထွက်ရှိခဲ့သော sci-fi ဇာတ်ကားတစ်ကားဖြစ်ပြီး Christopher Nolan မှ ရိုက်ကူးထားပါသည်။ Matthew McConaughey မှ အဓိကဇာတ်ဆောင် Cooper အဖြစ် သရုပ်ဆောင်ထားသည်။ ဤဇာတ်ကားသည် အာကာသ၊ အချိန်နှင့် ချစ်ခြင်းတော်တို့ကို လှပစွာ ဖော်ပြထားသည်။',
+    review: 'Interstellar သည် 2014 ခုနှစ်တွင် ထွက်ရှိခဲ့သော sci-fi ဇာတ်ကားတစ်ကားဖြစ်ပြီး Christopher Nolan မှ ရိုက်ကူးထားပါသည်။',
     genres: 'Adventure,Drama,Sci-Fi',
     quality4k: true,
     director: 'Christopher Nolan',
@@ -105,9 +109,10 @@ const movies = [
       { id: '15', name: 'Jessica Chastain', role: 'Murph', photo: null },
       { id: '16', name: 'Michael Caine', role: 'Professor Brand', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '5',
+    id: 'static-5',
     title: 'John Wick',
     year: 2014,
     rating: 7.4,
@@ -115,7 +120,7 @@ const movies = [
     poster: '/images/john-wick.jpg',
     backdrop: '/images/john-wick.jpg',
     description: 'An ex-hit-man comes out of retirement to track down the gangsters that killed his dog.',
-    review: 'John Wick သည် 2014 ခုနှစ်တွင် ထွက်ရှိခဲ့သော action thriller ဇာတ်ကားတစ်ကားဖြစ်ပြီး Chad Stahelski မှ ရိုက်ကူးထားပါသည်။ Keanu Reeves မှ John Wick အဖြစ် သရုပ်ဆောင်ထားသည်။ ဤဇာတ်ကားသည် လှုပ်ရှားမှုပြည့်ဝသော action ခက်ခဲသည့် ဇာတ်ကားတစ်ကားဖြစ်သည်။',
+    review: 'John Wick သည် 2014 ခုနှစ်တွင် ထွက်ရှိခဲ့သော action thriller ဇာတ်ကားတစ်ကားဖြစ်ပြီး Chad Stahelski မှ ရိုက်ကူးထားပါသည်။',
     genres: 'Action,Thriller',
     quality4k: true,
     director: 'Chad Stahelski',
@@ -131,9 +136,10 @@ const movies = [
       { id: '19', name: 'Alfie Allen', role: 'Iosef Tarasov', photo: null },
       { id: '20', name: 'Willem Dafoe', role: 'Marcus', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '6',
+    id: 'static-6',
     title: 'Avengers: Endgame',
     year: 2019,
     rating: 8.4,
@@ -141,7 +147,7 @@ const movies = [
     poster: '/images/avengers-endgame.jpg',
     backdrop: '/images/avengers-endgame.jpg',
     description: 'The Avengers assemble once more to reverse Thanos\' actions and restore balance to the universe.',
-    review: 'Avengers: Endgame သည် 2019 ခုနှစ်တွင် ထွက်ရှိခဲ့သော superhero ဇာတ်ကားတစ်ကားဖြစ်ပြီး Russo Brothers မှ ရိုက်ကူးထားပါသည်။ Marvel Cinematic Universe ၏ Infinity Saga ကို ပိတ်သိမ်းသော ဇာတ်ကားဖြစ်သည်။ ဤဇာတ်ကားတွင် များစွာသော superhero များ ပါဝင်သရုပ်ဆောင်ထားသည်။',
+    review: 'Avengers: Endgame သည် 2019 ခုနှစ်တွင် ထွက်ရှိခဲ့သော superhero ဇာတ်ကားတစ်ကားဖြစ်ပြီး Russo Brothers မှ ရိုက်ကူးထားပါသည်။',
     genres: 'Action,Adventure,Drama',
     quality4k: true,
     director: 'Anthony Russo, Joe Russo',
@@ -157,9 +163,10 @@ const movies = [
       { id: '23', name: 'Scarlett Johansson', role: 'Natasha Romanoff', photo: null },
       { id: '24', name: 'Chris Hemsworth', role: 'Thor', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '7',
+    id: 'static-7',
     title: 'Parasite',
     year: 2019,
     rating: 8.5,
@@ -167,7 +174,7 @@ const movies = [
     poster: '/images/parasite.jpg',
     backdrop: '/images/parasite.jpg',
     description: 'A poor family schemes to become employed by a wealthy family and infiltrate their household.',
-    review: 'Parasite သည် 2019 ခုနှစ်တွင် ထွက်ရှိခဲ့သော South Korean black comedy thriller ဇာတ်ကားတစ်ကားဖြစ်ပြီး Bong Joon-ho မှ ရိုက်ကူးထားပါသည်။ ဤဇာတ်ကားသည် Academy Award မှ Best Picture ဆုရရှိခဲ့သော ပထမဆုံး non-English ဇာတ်ကားဖြစ်သည်။',
+    review: 'Parasite သည် 2019 ခုနှစ်တွင် ထွက်ရှိခဲ့သော South Korean black comedy thriller ဇာတ်ကားတစ်ကားဖြစ်ပြီး Bong Joon-ho မှ ရိုက်ကူးထားပါသည်။',
     genres: 'Comedy,Drama,Thriller',
     quality4k: true,
     director: 'Bong Joon-ho',
@@ -183,9 +190,10 @@ const movies = [
       { id: '27', name: 'Cho Yeo-jeong', role: 'Yeon-gyo', photo: null },
       { id: '28', name: 'Choi Woo-shik', role: 'Kim Ki-woo', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '8',
+    id: 'static-8',
     title: 'The Shawshank Redemption',
     year: 1994,
     rating: 9.3,
@@ -193,7 +201,7 @@ const movies = [
     poster: '/images/shawshank.jpg',
     backdrop: '/images/shawshank.jpg',
     description: 'Two imprisoned men bond over a number of years, finding solace and eventual redemption.',
-    review: 'The Shawshank Redemption သည် 1994 ခုနှစ်တွင် ထွက်ရှိခဲ့သော drama ဇာတ်ကားတစ်ကားဖြစ်ပြီး Frank Darabont မှ ရိုက်ကူးထားပါသည်။ Stephen King ၏ ဝတ္ထုတိုကို အခြေခံထားသည်။ IMDb တွင် အဆင့် ၁ ဖြင့် အမြဲတမ်း တည်ရှိနေသော ဇာတ်ကားဖြစ်သည်။',
+    review: 'The Shawshank Redemption သည် 1994 ခုနှစ်တွင် ထွက်ရှိခဲ့သော drama ဇာတ်ကားတစ်ကားဖြစ်ပြီး Frank Darabont မှ ရိုက်ကူးထားပါသည်။',
     genres: 'Drama',
     quality4k: true,
     director: 'Frank Darabont',
@@ -209,9 +217,10 @@ const movies = [
       { id: '31', name: 'Bob Gunton', role: 'Warden Norton', photo: null },
       { id: '32', name: 'William Sadler', role: 'Heywood', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '9',
+    id: 'static-9',
     title: 'Spider-Man: No Way Home',
     year: 2021,
     rating: 8.2,
@@ -219,7 +228,7 @@ const movies = [
     poster: '/images/spiderman.jpg',
     backdrop: '/images/spiderman.jpg',
     description: 'Spider-Man seeks help from Doctor Strange to make the world forget his identity, leading to multiverse chaos.',
-    review: 'Spider-Man: No Way Home သည် 2021 ခုနှစ်တွင် ထွက်ရှိခဲ့သော superhero ဇာတ်ကားတစ်ကားဖြစ်ပြီး Jon Watts မှ ရိုက်ကူးထားပါသည်။ ဤဇာတ်ကားတွင် တိုင်မယ် Spider-Man များဖြစ်သည့် Tobey Maguire, Andrew Garfield နှင့် Tom Holland တို့ ပါဝင်သရုပ်ဆောင်ထားသည်။',
+    review: 'Spider-Man: No Way Home သည် 2021 ခုနှစ်တွင် ထွက်ရှိခဲ့သော superhero ဇာတ်ကားတစ်ကားဖြစ်ပြီး Jon Watts မှ ရိုက်ကူးထားပါသည်။',
     genres: 'Action,Adventure,Fantasy',
     quality4k: true,
     director: 'Jon Watts',
@@ -235,9 +244,10 @@ const movies = [
       { id: '35', name: 'Benedict Cumberbatch', role: 'Dr. Stephen Strange', photo: null },
       { id: '36', name: 'Jacob Batalon', role: 'Ned Leeds', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '10',
+    id: 'static-10',
     title: 'Dune',
     year: 2021,
     rating: 8.0,
@@ -245,7 +255,7 @@ const movies = [
     poster: '/images/dune.jpg',
     backdrop: '/images/dune.jpg',
     description: 'Paul Atreides, a brilliant and gifted young man born into a great destiny, must travel to the most dangerous planet.',
-    review: 'Dune သည် 2021 ခုနှစ်တွင် ထွက်ရှိခဲ့သော sci-fi ဇာတ်ကားတစ်ကားဖြစ်ပြီး Denis Villeneuve မှ ရိုက်ကူးထားပါသည်။ Frank Herbert ၏ ဝတ္ထုကို အခြေခံထားသည်။ ဤဇာတ်ကားသည် အသံ၊ ရုပ်ရှင်ရိုက်ကူးမှုနှင့် အထူးeffect များအတွက် ဆုများစွာ ရရှိခဲ့သည်။',
+    review: 'Dune သည် 2021 ခုနှစ်တွင် ထွက်ရှိခဲ့သော sci-fi ဇာတ်ကားတစ်ကားဖြစ်ပြီး Denis Villeneuve မှ ရိုက်ကူးထားပါသည်။',
     genres: 'Action,Adventure,Sci-Fi',
     quality4k: true,
     director: 'Denis Villeneuve',
@@ -261,6 +271,7 @@ const movies = [
       { id: '39', name: 'Oscar Isaac', role: 'Duke Leto Atreides', photo: null },
       { id: '40', name: 'Zendaya', role: 'Chani', photo: null },
     ],
+    downloadLinks: [],
   },
 ];
 
@@ -270,8 +281,61 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    let movie: any = null;
+    let allMovies: any[] = [...staticMovies];
 
-    const movie = movies.find((m) => m.id === id);
+    // Try to fetch from database
+    try {
+      const dbMovie = await db.movie.findUnique({
+        where: { id },
+        include: {
+          casts: true,
+          downloadLinks: true,
+        },
+      });
+
+      if (dbMovie) {
+        movie = {
+          ...dbMovie,
+          poster: dbMovie.poster || undefined,
+          backdrop: dbMovie.backdrop || undefined,
+          downloadLinks: dbMovie.downloadLinks.map((d) => ({
+            quality: d.quality,
+            url: d.url,
+            size: d.size,
+          })),
+        };
+      }
+
+      // Get all movies for similar movies calculation
+      const dbMovies = await db.movie.findMany({
+        include: {
+          casts: true,
+          downloadLinks: true,
+        },
+      });
+      
+      allMovies = [
+        ...dbMovies.map((m) => ({
+          ...m,
+          poster: m.poster || undefined,
+          backdrop: m.backdrop || undefined,
+          downloadLinks: m.downloadLinks.map((d) => ({
+            quality: d.quality,
+            url: d.url,
+            size: d.size,
+          })),
+        })),
+        ...staticMovies,
+      ];
+    } catch (dbError) {
+      console.log('Database not available, using static data');
+    }
+
+    // If not found in database, check static movies
+    if (!movie) {
+      movie = staticMovies.find((m) => m.id === id);
+    }
 
     if (!movie) {
       return NextResponse.json({ error: 'Movie not found' }, { status: 404 });
@@ -279,8 +343,8 @@ export async function GET(
 
     // Get similar movies based on genres
     const genres = movie.genres.split(',');
-    const similarMovies = movies
-      .filter((m) => m.id !== id && genres.some((g) => m.genres.includes(g.trim())))
+    const similarMovies = allMovies
+      .filter((m) => m.id !== id && genres.some((g: string) => m.genres.includes(g.trim())))
       .slice(0, 6);
 
     return NextResponse.json({
