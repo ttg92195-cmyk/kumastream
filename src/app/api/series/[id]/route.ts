@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getTMDBSeriesById } from '@/lib/data-store';
+import { getTMDBSeriesById, saveTMDBSeries, deleteTMDBSeries, updateEpisodeDownloadLinks } from '@/lib/data-store';
 
 // Static series data with episodes
 const staticSeriesData = [
@@ -298,5 +298,119 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching series:', error);
     return NextResponse.json({ error: 'Failed to fetch series' }, { status: 500 });
+  }
+}
+
+// PUT - Update series
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+
+    // Only allow editing TMDB imported series (not static ones)
+    if (!id.startsWith('tmdb-')) {
+      return NextResponse.json({ 
+        error: 'Cannot edit static series. Only TMDB imported series can be edited.' 
+      }, { status: 400 });
+    }
+
+    const existingSeries = getTMDBSeriesById(id);
+    if (!existingSeries) {
+      return NextResponse.json({ error: 'Series not found' }, { status: 404 });
+    }
+
+    // Update the series with new data
+    const updatedSeries = {
+      ...existingSeries,
+      ...body,
+      id, // Ensure ID doesn't change
+      updatedAt: new Date().toISOString(),
+    };
+
+    const success = saveTMDBSeries(updatedSeries);
+    
+    if (success) {
+      return NextResponse.json({ 
+        success: true, 
+        series: updatedSeries,
+        message: 'Series updated successfully' 
+      });
+    } else {
+      return NextResponse.json({ error: 'Failed to update series' }, { status: 500 });
+    }
+  } catch (error) {
+    console.error('Error updating series:', error);
+    return NextResponse.json({ error: 'Failed to update series' }, { status: 500 });
+  }
+}
+
+// DELETE - Delete series
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    // Only allow deleting TMDB imported series (not static ones)
+    if (!id.startsWith('tmdb-')) {
+      return NextResponse.json({ 
+        error: 'Cannot delete static series. Only TMDB imported series can be deleted.' 
+      }, { status: 400 });
+    }
+
+    const success = deleteTMDBSeries(id);
+    
+    if (success) {
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Series deleted successfully' 
+      });
+    } else {
+      return NextResponse.json({ error: 'Series not found or could not be deleted' }, { status: 404 });
+    }
+  } catch (error) {
+    console.error('Error deleting series:', error);
+    return NextResponse.json({ error: 'Failed to delete series' }, { status: 500 });
+  }
+}
+
+// PATCH - Update episode download links
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const { episodeId, downloadLinks } = body;
+
+    // Only allow editing TMDB imported series
+    if (!id.startsWith('tmdb-')) {
+      return NextResponse.json({ 
+        error: 'Cannot edit static series. Only TMDB imported series can be edited.' 
+      }, { status: 400 });
+    }
+
+    if (!episodeId || !downloadLinks || !Array.isArray(downloadLinks)) {
+      return NextResponse.json({ error: 'episodeId and downloadLinks array are required' }, { status: 400 });
+    }
+
+    const success = updateEpisodeDownloadLinks(id, episodeId, downloadLinks);
+    
+    if (success) {
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Episode download links updated successfully' 
+      });
+    } else {
+      return NextResponse.json({ error: 'Series or episode not found' }, { status: 404 });
+    }
+  } catch (error) {
+    console.error('Error updating episode download links:', error);
+    return NextResponse.json({ error: 'Failed to update episode download links' }, { status: 500 });
   }
 }

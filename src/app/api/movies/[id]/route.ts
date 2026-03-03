@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getTMDBMovieById } from '@/lib/data-store';
+import { getTMDBMovieById, saveTMDBMovie, deleteTMDBMovie, updateMovieDownloadLinks } from '@/lib/data-store';
 
 // Static movies data
 const staticMovies = [
@@ -302,5 +302,119 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching movie:', error);
     return NextResponse.json({ error: 'Failed to fetch movie' }, { status: 500 });
+  }
+}
+
+// PUT - Update movie
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+
+    // Only allow editing TMDB imported movies (not static ones)
+    if (!id.startsWith('tmdb-')) {
+      return NextResponse.json({ 
+        error: 'Cannot edit static movies. Only TMDB imported movies can be edited.' 
+      }, { status: 400 });
+    }
+
+    const existingMovie = getTMDBMovieById(id);
+    if (!existingMovie) {
+      return NextResponse.json({ error: 'Movie not found' }, { status: 404 });
+    }
+
+    // Update the movie with new data
+    const updatedMovie = {
+      ...existingMovie,
+      ...body,
+      id, // Ensure ID doesn't change
+      updatedAt: new Date().toISOString(),
+    };
+
+    const success = saveTMDBMovie(updatedMovie);
+    
+    if (success) {
+      return NextResponse.json({ 
+        success: true, 
+        movie: updatedMovie,
+        message: 'Movie updated successfully' 
+      });
+    } else {
+      return NextResponse.json({ error: 'Failed to update movie' }, { status: 500 });
+    }
+  } catch (error) {
+    console.error('Error updating movie:', error);
+    return NextResponse.json({ error: 'Failed to update movie' }, { status: 500 });
+  }
+}
+
+// DELETE - Delete movie
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    // Only allow deleting TMDB imported movies (not static ones)
+    if (!id.startsWith('tmdb-')) {
+      return NextResponse.json({ 
+        error: 'Cannot delete static movies. Only TMDB imported movies can be deleted.' 
+      }, { status: 400 });
+    }
+
+    const success = deleteTMDBMovie(id);
+    
+    if (success) {
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Movie deleted successfully' 
+      });
+    } else {
+      return NextResponse.json({ error: 'Movie not found or could not be deleted' }, { status: 404 });
+    }
+  } catch (error) {
+    console.error('Error deleting movie:', error);
+    return NextResponse.json({ error: 'Failed to delete movie' }, { status: 500 });
+  }
+}
+
+// PATCH - Update download links only
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const { downloadLinks } = body;
+
+    // Only allow editing TMDB imported movies
+    if (!id.startsWith('tmdb-')) {
+      return NextResponse.json({ 
+        error: 'Cannot edit static movies. Only TMDB imported movies can be edited.' 
+      }, { status: 400 });
+    }
+
+    if (!downloadLinks || !Array.isArray(downloadLinks)) {
+      return NextResponse.json({ error: 'downloadLinks array is required' }, { status: 400 });
+    }
+
+    const success = updateMovieDownloadLinks(id, downloadLinks);
+    
+    if (success) {
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Download links updated successfully' 
+      });
+    } else {
+      return NextResponse.json({ error: 'Movie not found' }, { status: 404 });
+    }
+  } catch (error) {
+    console.error('Error updating download links:', error);
+    return NextResponse.json({ error: 'Failed to update download links' }, { status: 500 });
   }
 }
