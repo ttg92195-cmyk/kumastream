@@ -1,9 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Placeholder image for missing/broken posters
+const PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9Ijc1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMjIyIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZpbGw9IiM2NjYiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
 
 interface MovieCardProps {
   id: string;
@@ -25,17 +29,28 @@ export function MovieCard({
   type = 'movie',
 }: MovieCardProps) {
   const href = type === 'movie' ? `/movie/${id}` : `/series/${id}`;
+  const [imgError, setImgError] = useState(false);
+  const [imgSrc, setImgSrc] = useState(poster || PLACEHOLDER);
+
+  const handleImageError = () => {
+    if (!imgError) {
+      setImgError(true);
+      setImgSrc(PLACEHOLDER);
+    }
+  };
 
   return (
     <Link href={href} className="block">
       <div className="relative aspect-[2/3] rounded-md overflow-hidden bg-gray-800">
         {/* Poster Image */}
         <Image
-          src={poster}
-          alt={title}
+          src={imgSrc}
+          alt={title || 'Movie poster'}
           fill
           className="object-cover"
           sizes="(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 20vw"
+          onError={handleImageError}
+          unoptimized
         />
 
         {/* 4K Badge - Top Left */}

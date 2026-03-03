@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Menu, Search, X } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
@@ -18,17 +18,26 @@ export function Header({
   searchPlaceholder = 'Search...',
   onSearch,
 }: HeaderProps) {
-  const { toggleSidebar, searchQuery, setSearchQuery } = useAppStore();
+  const { toggleSidebar, searchQuery, setSearchQuery, _hasHydrated } = useAppStore();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+
+  // Only render after mount to prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Use hydrated data if available, otherwise use defaults
+  const currentSearchQuery = mounted && _hasHydrated ? searchQuery : '';
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
+    if (currentSearchQuery.trim()) {
       if (onSearch) {
-        onSearch(searchQuery);
+        onSearch(currentSearchQuery);
       } else {
-        router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+        router.push(`/search?q=${encodeURIComponent(currentSearchQuery)}`);
       }
     }
   };
@@ -65,14 +74,14 @@ export function Header({
               </div>
               <input
                 type="text"
-                value={searchQuery}
+                value={currentSearchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setIsSearchFocused(false)}
                 placeholder={searchPlaceholder}
                 className="w-full bg-[#1f1f1f] text-white placeholder-gray-500 pl-10 pr-10 py-2 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
               />
-              {searchQuery && (
+              {currentSearchQuery && (
                 <button
                   type="button"
                   onClick={clearSearch}
