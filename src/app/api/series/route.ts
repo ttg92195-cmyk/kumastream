@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
 
-// Static series data
-const series = [
+// Static series data (fallback)
+const staticSeries = [
   {
-    id: '1',
+    id: 'static-1',
     title: 'Breaking Bad',
     year: 2008,
     rating: 9.5,
@@ -20,9 +21,10 @@ const series = [
       { id: '3', name: 'Anna Gunn', role: 'Skyler White', photo: null },
       { id: '4', name: 'Dean Norris', role: 'Hank Schrader', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '2',
+    id: 'static-2',
     title: 'Game of Thrones',
     year: 2011,
     rating: 9.2,
@@ -39,9 +41,10 @@ const series = [
       { id: '7', name: 'Peter Dinklage', role: 'Tyrion Lannister', photo: null },
       { id: '8', name: 'Lena Headey', role: 'Cersei Lannister', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '3',
+    id: 'static-3',
     title: 'Stranger Things',
     year: 2016,
     rating: 8.7,
@@ -58,9 +61,10 @@ const series = [
       { id: '11', name: 'Winona Ryder', role: 'Joyce Byers', photo: null },
       { id: '12', name: 'David Harbour', role: 'Jim Hopper', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '4',
+    id: 'static-4',
     title: 'The Witcher',
     year: 2019,
     rating: 8.2,
@@ -75,11 +79,11 @@ const series = [
       { id: '13', name: 'Henry Cavill', role: 'Geralt of Rivia', photo: null },
       { id: '14', name: 'Anya Chalotra', role: 'Yennefer', photo: null },
       { id: '15', name: 'Freya Allan', role: 'Ciri', photo: null },
-      { id: '16', name: 'Joey Batey', role: 'Jaskier', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '5',
+    id: 'static-5',
     title: 'Money Heist',
     year: 2017,
     rating: 8.2,
@@ -94,11 +98,11 @@ const series = [
       { id: '17', name: 'Úrsula Corberó', role: 'Tokyo', photo: null },
       { id: '18', name: 'Álvaro Morte', role: 'The Professor', photo: null },
       { id: '19', name: 'Itziar Ituño', role: 'Raquel Murillo', photo: null },
-      { id: '20', name: 'Pedro Alonso', role: 'Berlin', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '6',
+    id: 'static-6',
     title: 'The Last of Us',
     year: 2023,
     rating: 8.8,
@@ -113,9 +117,10 @@ const series = [
       { id: '21', name: 'Pedro Pascal', role: 'Joel', photo: null },
       { id: '22', name: 'Bella Ramsey', role: 'Ellie', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '7',
+    id: 'static-7',
     title: 'Wednesday',
     year: 2022,
     rating: 8.1,
@@ -129,9 +134,10 @@ const series = [
     casts: [
       { id: '23', name: 'Jenna Ortega', role: 'Wednesday Addams', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '8',
+    id: 'static-8',
     title: 'Peaky Blinders',
     year: 2013,
     rating: 8.8,
@@ -145,9 +151,10 @@ const series = [
     casts: [
       { id: '24', name: 'Cillian Murphy', role: 'Thomas Shelby', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '9',
+    id: 'static-9',
     title: 'Squid Game',
     year: 2021,
     rating: 8.0,
@@ -161,9 +168,10 @@ const series = [
     casts: [
       { id: '25', name: 'Lee Jung-jae', role: 'Seong Gi-hun', photo: null },
     ],
+    downloadLinks: [],
   },
   {
-    id: '10',
+    id: 'static-10',
     title: 'House of the Dragon',
     year: 2022,
     rating: 8.4,
@@ -177,6 +185,7 @@ const series = [
     casts: [
       { id: '26', name: 'Matt Smith', role: 'Prince Daemon Targaryen', photo: null },
     ],
+    downloadLinks: [],
   },
 ];
 
@@ -185,27 +194,66 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const genre = searchParams.get('genre');
     const search = searchParams.get('search');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    let filteredSeries = [...series];
+    let dbSeries: any[] = [];
 
-    if (genre) {
-      filteredSeries = filteredSeries.filter((s) => s.genres.includes(genre));
+    // Try to fetch from database
+    try {
+      const whereClause: any = {};
+      
+      if (genre) {
+        whereClause.genres = { contains: genre };
+      }
+      
+      if (search) {
+        whereClause.title = { contains: search, mode: 'insensitive' };
+      }
+
+      const dbResult = await db.series.findMany({
+        where: whereClause,
+        include: {
+          casts: true,
+          downloadLinks: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      dbSeries = dbResult.map((s) => ({
+        ...s,
+        poster: s.poster || undefined,
+        backdrop: s.backdrop || undefined,
+        downloadLinks: s.downloadLinks.map((d) => ({
+          quality: d.quality,
+          url: d.url,
+          size: d.size,
+        })),
+      }));
+    } catch (dbError) {
+      console.log('Database not available, using static data');
     }
 
+    // Combine with static data
+    let allSeries = [...dbSeries, ...staticSeries];
+
+    // Apply filters if needed
+    if (genre) {
+      allSeries = allSeries.filter((s) => s.genres.includes(genre));
+    }
     if (search) {
-      filteredSeries = filteredSeries.filter((s) =>
+      allSeries = allSeries.filter((s) =>
         s.title.toLowerCase().includes(search.toLowerCase())
       );
     }
 
-    const paginatedSeries = filteredSeries.slice(offset, offset + limit);
+    const total = allSeries.length;
+    const paginatedSeries = allSeries.slice(offset, offset + limit);
 
     return NextResponse.json({
       series: paginatedSeries,
-      total: filteredSeries.length,
-      hasMore: offset + limit < filteredSeries.length,
+      total,
+      hasMore: offset + limit < total,
     });
   } catch (error) {
     console.error('Error fetching series:', error);
